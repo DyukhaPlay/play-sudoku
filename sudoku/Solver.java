@@ -8,57 +8,7 @@ import java.io.*;
 
 
 public class Solver {
-  public class IncorrectInitialPosition extends Exception {
-    public IncorrectInitialPosition(String msg) {
-      super(msg);
-    }
-  }
   private final static int N = Position.N, S = Position.S;
-
-  public static class Pair {
-    int first, second;
-    public Pair (int f, int s) {
-      first = f;
-      second = s;
-    }
-  }
-
-  public static class Navigator {
-    public static Pair[][] Block, Row, Col;
-    public static Pair[][] All;
-    public static Pair[][][][] Cell;
-
-    static {
-      Block = new Pair[N][N];
-      Row = new Pair[N][N];
-      Col = new Pair[N][N];
-      All = new Pair[N * 3][N];
-      Cell = new Pair[N][N][3][];
-      int[][] cellCur = new int[N][N];
-      int cur = 0;
-      for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
-          Row[i][j] = new Pair(i, j);
-          Cell[i][j][cellCur[i][j]++] = Row[i];
-        }
-        All[cur++] = Row[i];
-
-        for (int j = 0; j < N; j++) {
-          Col[i][j] = new Pair(j, i);
-          Cell[j][i][cellCur[j][i]++] = Col[i];
-        }
-        All[cur++] = Col[i];
-
-        int si = i / S * S, sj = i % S * S;
-        for (int j = 0; j < N; j++) {
-          int pi = si + j / S, pj = sj + j % S;
-          Block[i][j] = new Pair(pi, pj);
-          Cell[pi][pj][cellCur[pi][pj]++] = Block[i];
-        }
-        All[cur++] = Block[i];
-      }
-    }
-  }
 
   boolean next(int[] a) {
     int cur = N;
@@ -136,8 +86,9 @@ public class Solver {
   int[] rowMask, colMask, blockMask;
   int[] rowCnt, colCnt, blockCnt;
   int[][] mask;
+  boolean isDoomed = false;
 
-  public Solver(Position pos) throws IncorrectInitialPosition {
+  public Solver(Position pos) {
     this.pos = pos.copy();
     this.initPos = pos.copy();
     rowMask = new int[N];
@@ -150,21 +101,19 @@ public class Solver {
       rowMask[i] = FULL_MASK;
       rowCnt[i] = 0;
       for (Pair p : Navigator.Row[i]) {
-        int v = pos.get(p.first, p.second);
+        int v = pos.get(p.first(), p.second());
         if (v != 0) {
           rowMask[i] = unsetBit(rowMask[i], v);
           rowCnt[i]++;
         }
       }
-      if (rowCnt[i] != N - bitCount(rowMask[i]))
-        throw new IncorrectInitialPosition("row " + i);
     }
 
     for (int i = 0; i < N; i++) {
       colMask[i] = FULL_MASK;
       colCnt[i] = 0;
       for (Pair p : Navigator.Col[i]) {
-        int v = pos.get(p.first, p.second);
+        int v = pos.get(p.first(), p.second());
         if (v != 0) {
           colMask[i] = unsetBit(colMask[i], v);
           colCnt[i]++;
@@ -176,7 +125,7 @@ public class Solver {
       blockMask[i] = FULL_MASK;
       blockCnt[i] = 0;
       for (Pair p : Navigator.Block[i]) {
-        int v = pos.get(p.first, p.second);
+        int v = pos.get(p.first(), p.second());
         if (v != 0) {
           blockMask[i] = unsetBit(blockMask[i], v);
           blockCnt[i]++;
@@ -186,13 +135,13 @@ public class Solver {
 
     for (int i = 0; i < N; i++)
       if (rowCnt[i] != N - bitCount(rowMask[i]))
-        throw new IncorrectInitialPosition("row " + i);
+        isDoomed = true;
     for (int i = 0; i < N; i++)
       if (colCnt[i] != N - bitCount(colMask[i]))
-        throw new IncorrectInitialPosition("col " + i);
+        isDoomed = true;
     for (int i = 0; i < N; i++)
       if (blockCnt[i] != N - bitCount(blockMask[i]))
-        throw new IncorrectInitialPosition("block " + i);
+        isDoomed = true;
 
     mask = new int[N][];
     for (int i = 0; i < N; i++) {
@@ -244,7 +193,7 @@ public class Solver {
     blockMask[block] = unsetBit(blockMask[block], v);
     for (Pair[] nav : Navigator.Cell[i][j])
       for (Pair p : nav)
-        updateCell(p.first, p.second);
+        updateCell(p.first(), p.second());
   }
 
   boolean removeOthers(int m, Pair ... cells) {
@@ -253,7 +202,7 @@ public class Solver {
       int cnt = 0;
       for (Pair p : nav) {
         for (Pair c : cells) {
-          if (p.first == c.first && p.second == c.second) {
+          if (p.first() == c.first() && p.second() == c.second()) {
             cnt++;
             break;
           }
@@ -264,13 +213,13 @@ public class Solver {
       for (Pair p : nav) {
         boolean other = true;
         for (Pair c : cells) {
-          if (p.first == c.first && p.second == c.second) {
+          if (p.first() == c.first() && p.second() == c.second()) {
             other = false;
             break;
           }
         }
         if (other) {
-          res |= change(p.first, p.second, mask[p.first][p.second] & ~m);
+          res |= change(p.first(), p.second(), mask[p.first()][p.second()] & ~m);
         }
       }
     }
@@ -310,13 +259,13 @@ public class Solver {
         outer:
         for (Pair p : nav) {
           for (int b : a) {
-            if (pos.get(p.first, p.second) == b) {
+            if (pos.get(p.first(), p.second()) == b) {
               cnt = -100;
               break outer;
             }
           }
           for (int b : a) {
-            if (containsBit(mask[p.first][p.second], b)) {
+            if (containsBit(mask[p.first()][p.second()], b)) {
               cnt++;
               break;
             }
@@ -328,11 +277,11 @@ public class Solver {
         int cur = 0;
         if (cnt == n) {
           for (Pair p : nav) {
-            int pMask = mask[p.first][p.second];
+            int pMask = mask[p.first()][p.second()];
             for (int b : a) {
               if (containsBit(pMask, b)) {
-                flag |= change(p.first, p.second, m);
-                ps[cur++] = new Pair(p.first, p.second);
+                flag |= change(p.first(), p.second(), m);
+                ps[cur++] = new Pair(p.first(), p.second());
                 break;
               }
             }
@@ -351,18 +300,18 @@ public class Solver {
       boolean visited = false;
       int cnt = 0;
       for (Pair p : nav) {
-        int m = mask[p.first][p.second];
-        visited |= p.first == i && p.second == j;
-        if (containsBit(m, bit) && colors[p.first][p.second] == 0) {
+        int m = mask[p.first()][p.second()];
+        visited |= p.first() == i && p.second() == j;
+        if (containsBit(m, bit) && colors[p.first()][p.second()] == 0) {
           cnt++;
         }
       }
       assert visited;
       if (cnt == 1) {
         for (Pair p : nav) {
-          int m = mask[p.first][p.second];
-          if (containsBit(m, bit) && colors[p.first][p.second] == 0) {
-            dfs(p.first, p.second, bit, newColor, colors);
+          int m = mask[p.first()][p.second()];
+          if (containsBit(m, bit) && colors[p.first()][p.second()] == 0) {
+            dfs(p.first(), p.second(), bit, newColor, colors);
           }
         }
       }
@@ -380,9 +329,9 @@ public class Solver {
       for (Pair[] nav : Navigator.All) {
         int fst = 0, snd = 0;
         for (Pair p : nav) {
-          if (colors[p.first][p.second] == 1)
+          if (colors[p.first()][p.second()] == 1)
             fst++;
-          if (colors[p.first][p.second] == 2)
+          if (colors[p.first()][p.second()] == 2)
             snd++;
         }
         if (fst > 1)
@@ -410,6 +359,8 @@ public class Solver {
   }
 
   boolean colors() {
+    if (pos.numsCount() < N / 2 )
+      return false;
     for (int i = 0; i < N; i++)
       for (int j = 0; j < N; j++)
         if (pos.get(i,j) == 0 && tryColors(i, j))
@@ -430,7 +381,7 @@ public class Solver {
     for (Pair[] nav : Navigator.All) {
       int m = 0;
       for (Pair p : nav) {
-        m = setBit(m, pos.get(p.first, p.second));
+        m = setBit(m, pos.get(p.first(), p.second()));
       }
       if (m != FULL_MASK)
         return false;
@@ -438,8 +389,9 @@ public class Solver {
     return true;
   }
 
-  public List<Position> solve() {
-    //pos.print(System.out);
+  private List<Solver> getNextSolversForBruteForce() {
+    if (isDoomed)
+      return new ArrayList<>();
     outer:
     while (true) {
       if (findOnlyOnes())
@@ -462,23 +414,45 @@ public class Solver {
         }
       }
     }
-    if (minc == inf) {
-      if (checkSolution())
-        return Arrays.asList(pos);
-      else
-        return new ArrayList<>();
-    }
+    List<Solver> res = new ArrayList<>();
+    if (minc == inf)
+      return res;
+    int cur = 0;
     int m = mask[mini][minj];
-    //pos.print(System.out);
-    List<Position> ans = new ArrayList<>();
+
     for (int b = 1; b <= N; b++) {
       if (containsBit(m, b)) {
         Solver solver = new Solver(this);
         solver.setVal(mini, minj, b);
-        ans.addAll(solver.solve());
+        res.add(solver);
       }
     }
-    return ans;
+    return res;
+  }
+
+  // 0 for 0, 1 for 1, >1 for other cases
+  public int estimateSolutionCount() {
+    List<Solver> solvers = getNextSolversForBruteForce();
+    if (solvers.isEmpty())
+      return checkSolution() ? 1 : 0;
+    int cur = 0;
+    for (Solver solver : solvers) {
+      cur += solver.estimateSolutionCount();
+      if (cur > 1)
+        return cur;
+    }
+    return cur;
     //return new ArrayList<>();
+  }
+
+  public List<Position> solve() {
+    List<Solver> solvers = getNextSolversForBruteForce();
+    if (solvers.isEmpty())
+      return checkSolution() ? Arrays.asList(pos) : new ArrayList<>();
+    List<Position> ans = new ArrayList<>();
+    for (Solver solver : solvers) {
+      ans.addAll(solver.solve());
+    }
+    return ans;
   }
 }

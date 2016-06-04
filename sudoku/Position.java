@@ -47,6 +47,15 @@ public final class Position {
     out.println();
   }
 
+  public int numsCount() {
+    int res = 0;
+    for (int i = 0; i < N; i++)
+      for (int j = 0; j < N; j++)
+        if (a[i][j] > 0)
+          res++;
+    return res;
+  }
+
   public int get(int i, int j) {
     return a[i][j];
   }

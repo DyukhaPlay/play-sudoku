@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 public class Sudoku {
-  public static void main(String[] args) throws IOException, Solver.IncorrectInitialPosition {
+  public static void main(String[] args) throws IOException {
     Solver solver;
     {
       Position pos;
