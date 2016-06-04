@@ -109,13 +109,18 @@ public class Creator {
 
   public static void main(String[] args) {
     long time = System.nanoTime();
-    Position pos = Init();
-    printMsg("After init", true);
-    AddWhileNecessary(pos);
-    printMsg("After adding", true);
-    RemoveWhileCan(pos);
-    printMsg("After remove", true);
-    printMsg("Nums count: " + pos.numsCount(), false);
+    while (true) {
+      Position pos = Init();
+      printMsg("After init", true);
+      AddWhileNecessary(pos);
+      printMsg("After adding", true);
+      RemoveWhileCan(pos);
+      printMsg("After remove", true);
+      int numsCount = pos.numsCount();
+      printMsg("Nums count: " + numsCount, false);
+      if (numsCount < 22)
+        break;
+    }
     printMsg("Time: " + ((System.nanoTime() - time) / 1e9), false);
   }
 }

@@ -8,7 +8,7 @@ public class Sudoku {
     Solver solver;
     {
       Position pos;
-      try (Scanner scanner = new Scanner(new FileReader("sudoku.in"))) {
+      try (Scanner scanner = new Scanner(System.in)) {
         pos = Position.read(scanner);
       }
       solver = new Solver(pos);

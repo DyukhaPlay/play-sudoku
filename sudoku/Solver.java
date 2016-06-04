@@ -240,6 +240,7 @@ public class Solver {
 
   void dfs(int i, int j, int bit, int color, int[][] colors) {
     assert colors[i][j] == 0;
+    assert containsBit(mask[i][j], bit);
     colors[i][j] = color;
     int newColor = 3 - color;
     for (Pair[] nav : Navigator.Cell[i][j]) {
@@ -247,12 +248,12 @@ public class Solver {
       int cnt = 0;
       for (Pair p : nav) {
         visited |= p.first() == i && p.second() == j;
-        if (containsBit(p.inArr(mask), bit) && p.inArr(colors) == 0) {
+        if (containsBit(p.inArr(mask), bit)) {
           cnt++;
         }
       }
       assert visited;
-      if (cnt == 1) {
+      if (cnt == 2) {
         for (Pair p : nav) {
           if (containsBit(p.inArr(mask), bit) && p.inArr(colors) == 0) {
             dfs(p.first(), p.second(), bit, newColor, colors);
