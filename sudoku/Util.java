@@ -28,6 +28,21 @@ public class Util {
     }
     public int first() { return myFirst; }
     public int second() { return mySecond; }
+
+    public int inArr(int[][] a) {
+      return a[myFirst][mySecond];
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (!(o instanceof Pair))
+        return false;
+      return eq((Pair)o);
+    }
+
+    public boolean eq(Pair other) {
+      return other.myFirst == myFirst && other.mySecond == mySecond;
+    }
   }
 
   public static class Navigator {

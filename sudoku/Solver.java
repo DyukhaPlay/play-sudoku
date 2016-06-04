@@ -90,9 +90,8 @@ public class Solver {
       if (blockCnt[i] != N - bitCount(blockMask[i]))
         isDoomed = true;
 
-    mask = new int[N][];
+    mask = new int[N][N];
     for (int i = 0; i < N; i++) {
-      mask[i] = new int[N];
       for (int j = 0; j < N; j++) {
         updateCell(i, j);
       }
@@ -116,21 +115,18 @@ public class Solver {
   }
 
   private final void updateCell(int i, int j) {
-    if (pos.get(i,j) == 0)
+    if (pos.get(i,j) != 0)
+      mask[i][j] = fromBit(pos.get(i, j));
+    else {
       mask[i][j] = rowMask[i] & colMask[j] & blockMask[getBlock(i, j)];
-    else
-      mask[i][j] = fromBit(pos.get(i,j));
+      isDoomed |= mask[i][j] == 0;
+    }
   }
 
   private void setVal(int i, int j, int v) {
     assert pos.get(i, j) == 0;
     assert v != 0;
     int block = getBlock(i,j);
-    /*System.out.println(i + " " + j);
-    printMask(rowMask[i]);
-    printMask(colMask[j]);
-    printMask(blockMask[block]);
-    printMask(mask[i][j]);*/
     pos.set(i, j, v);
     rowCnt[i]++;
     rowMask[i] = unsetBit(rowMask[i], v);
@@ -149,7 +145,7 @@ public class Solver {
       int cnt = 0;
       for (Pair p : nav) {
         for (Pair c : cells) {
-          if (p.first() == c.first() && p.second() == c.second()) {
+          if (p.eq(c)) {
             cnt++;
             break;
           }
@@ -160,13 +156,13 @@ public class Solver {
       for (Pair p : nav) {
         boolean other = true;
         for (Pair c : cells) {
-          if (p.first() == c.first() && p.second() == c.second()) {
+          if (p.eq(c)) {
             other = false;
             break;
           }
         }
         if (other) {
-          res |= change(p.first(), p.second(), mask[p.first()][p.second()] & ~m);
+          res |= change(p.first(), p.second(), p.inArr(mask) & ~m);
         }
       }
     }
@@ -188,9 +184,11 @@ public class Solver {
   }
 
   boolean change(int i, int j, int v) {
-    if ((mask[i][j] & v) == mask[i][j])
+    int m = mask[i][j];
+    if ((m & v) == m)
       return false;
-    mask[i][j] &= v;
+    mask[i][j] = m & v;
+    isDoomed |= mask[i][j] == 0;
     return true;
   }
 
@@ -212,7 +210,7 @@ public class Solver {
             }
           }
           for (int b : a) {
-            if (containsBit(mask[p.first()][p.second()], b)) {
+            if (containsBit(p.inArr(mask), b)) {
               cnt++;
               break;
             }
@@ -224,11 +222,11 @@ public class Solver {
         int cur = 0;
         if (cnt == n) {
           for (Pair p : nav) {
-            int pMask = mask[p.first()][p.second()];
+            int pMask = p.inArr(mask);
             for (int b : a) {
               if (containsBit(pMask, b)) {
                 flag |= change(p.first(), p.second(), m);
-                ps[cur++] = new Pair(p.first(), p.second());
+                ps[cur++] = p;
                 break;
               }
             }
@@ -241,23 +239,22 @@ public class Solver {
   }
 
   void dfs(int i, int j, int bit, int color, int[][] colors) {
+    assert colors[i][j] == 0;
     colors[i][j] = color;
     int newColor = 3 - color;
     for (Pair[] nav : Navigator.Cell[i][j]) {
       boolean visited = false;
       int cnt = 0;
       for (Pair p : nav) {
-        int m = mask[p.first()][p.second()];
         visited |= p.first() == i && p.second() == j;
-        if (containsBit(m, bit) && colors[p.first()][p.second()] == 0) {
+        if (containsBit(p.inArr(mask), bit) && p.inArr(colors) == 0) {
           cnt++;
         }
       }
       assert visited;
       if (cnt == 1) {
         for (Pair p : nav) {
-          int m = mask[p.first()][p.second()];
-          if (containsBit(m, bit) && colors[p.first()][p.second()] == 0) {
+          if (containsBit(p.inArr(mask), bit) && p.inArr(colors) == 0) {
             dfs(p.first(), p.second(), bit, newColor, colors);
           }
         }
@@ -276,9 +273,9 @@ public class Solver {
       for (Pair[] nav : Navigator.All) {
         int fst = 0, snd = 0;
         for (Pair p : nav) {
-          if (colors[p.first()][p.second()] == 1)
+          if (p.inArr(colors) == 1)
             fst++;
-          if (colors[p.first()][p.second()] == 2)
+          if (p.inArr(colors) == 2)
             snd++;
         }
         if (fst > 1)
@@ -337,10 +334,10 @@ public class Solver {
   }
 
   private List<Solver> getNextSolversForBruteForce() {
-    if (isDoomed)
-      return new ArrayList<>();
     outer:
     while (true) {
+      if (isDoomed)
+        return new ArrayList<>();
       if (findOnlyOnes())
         continue;
       for (int i = 1; i <= 2; i++)
