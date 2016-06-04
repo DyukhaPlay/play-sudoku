@@ -1,7 +1,7 @@
 package sudoku;
 
 import static sudoku.Util.*;
-import static sudoku.Solver.BitHelper.*;
+import static sudoku.Util.BitHelper.*;
 
 import java.util.*;
 import java.io.*;
@@ -25,62 +25,9 @@ public class Solver {
     return false;
   }
 
-  public static class BitHelper {
-    public final static int FULL_MASK = (1 << N) - 1;
-    public static int bitCountCache[];
-    public static int singleBit[];
-
-    static {
-      bitCountCache = new int[1 << N];
-      for (int i = 0; i < (1 << N); i++) {
-        bitCountCache[i] = Integer.bitCount(i);
-      }
-      singleBit = new int[1 << N];
-      for (int i = 1; i <= N; i++) {
-        singleBit[1 << (i-1)] = i;
-      }
-    }
-
-    public static int bitCount(int i) {
-      return bitCountCache[i];
-    }
-
-    public static boolean containsBit(int mask, int bit) {
-      return (mask & (1 << (bit-1))) != 0;
-    }
-
-    public static int unsetBit(int mask, int bit) {
-      return mask ^ (1 << (bit-1));
-    }
-
-    public static int setBit(int mask, int bit) {
-      return mask ^ (1 << (bit-1));
-    }
-
-    public static int getSingleBit(int mask) {
-      return singleBit[mask];
-    }
-
-    public static void printMask(int mask) {
-      System.out.println(Integer.toBinaryString(mask));
-    }
-
-    public static int fromBit(int bit) {
-      return 1 << (bit - 1);
-    }
-
-    public static int fromBits(int[] bits) {
-      int res = 0;
-      for (int b : bits)
-        res |= (1 << b);
-      return res >> 1;
-    }
-  }
-
   private static int getBlock(int i, int j) {
     return i / S * S + j / S;
   }
-
 
   private Position pos, initPos;
   int[] rowMask, colMask, blockMask;
