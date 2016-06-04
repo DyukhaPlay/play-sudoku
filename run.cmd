@@ -1,1 +1,1 @@
-java sudoku.Sudoku > out
+java -classpath bin sudoku.Sudoku > out

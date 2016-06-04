@@ -1,1 +1,2 @@
-javac sudoku/*.java
+md bin
+javac -d bin sudoku/*.java
