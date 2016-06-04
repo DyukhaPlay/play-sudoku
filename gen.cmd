@@ -1,0 +1,1 @@
+java sudoku.Creator > out.txt
