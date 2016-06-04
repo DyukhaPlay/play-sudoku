@@ -267,7 +267,7 @@ public class Solver {
 
   boolean tryColors(int i, int j) {
     boolean flag = false;
-    for (int b = 0; b <= N; b++) {
+    for (int b = 1; b <= N; b++) {
       if (!containsBit(mask[i][j], b))
         continue;
       int[][] colors = new int[N][N];
@@ -394,8 +394,9 @@ public class Solver {
 
   public List<Position> solve() {
     List<Solver> solvers = getNextSolversForBruteForce();
-    if (solvers.isEmpty())
+    if (solvers.isEmpty()) {
       return checkSolution() ? Arrays.asList(pos) : new ArrayList<>();
+    }
     List<Position> ans = new ArrayList<>();
     for (Solver solver : solvers) {
       ans.addAll(solver.solve());

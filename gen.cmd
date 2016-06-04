@@ -1,1 +1,1 @@
-java -classpath bin sudoku.Creator > out.txt
+java -ea -classpath bin sudoku.Creator > out.txt

@@ -93,7 +93,7 @@ public class Creator {
       int res = solver.estimateSolutionCount();
       assert res > 0;
       if (res > 1) {
-        pos.set(i,j, v);
+        pos.set(i, j, v);
         continue;
       }
       pos.print(System.out);
